@@ -1,6 +1,6 @@
 from graphviz import Digraph
 import requests
-import os
+
 
 choice = 'y'
 accepted_symbols = 'qwertyuiopasdfghjklzxcvbnm123456789-'
@@ -16,8 +16,7 @@ def dependence_search(package) -> set:
 
         cur_set = set()
         for package in var:
-            #  or "extra" in package
-            if len(package) == 0:
+            if len(package) == 0 or "extra" in package:
                 continue
             str = ''
             i = 0
@@ -33,15 +32,12 @@ def dependence_search(package) -> set:
         return set()
 
 
-def create_edges(graph, set, package) -> Digraph:
+def create_edges(graph, set, package):
     if set is None:
         return
 
-    if set:
-        for r in set:
-            graph.edge(package, r)
-    else:
-        graph.node(package)
+    for r in set:
+        graph.edge(package, r)
 
 
 def deep_search(package, graph, level):
@@ -49,18 +45,17 @@ def deep_search(package, graph, level):
     next_level = {package}
     while level > 0:
         list_of_packs = next_level.copy()
-        next_level.clear()
+        next_level = set()
         if list_of_packs:
             for pack in list_of_packs:
                 new_dependencies = dependence_search(pack)
                 new_dependencies -= nodes
-                nodes.add(pack)
+                nodes = nodes | set(pack)
                 create_edges(graph, new_dependencies, pack)
                 next_level |= new_dependencies
         else:
             return
         level -= 1
-    return graph
 
 
 def main() -> None:
@@ -76,7 +71,7 @@ def main() -> None:
         main()
     else:
         depth = int(input("Зависимости найдены. Введите глубину поиска: "))
-        my_graph = deep_search(pack, my_graph, depth)
+        deep_search(pack, my_graph, depth)
         print(my_graph.source)
         my_graph.render(directory='homework2', view=True, engine='circo')
 
